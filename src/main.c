@@ -2,12 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* --- Constants and File Paths --- */
 #define CANDIDATES_FILE "data/candidates.dat"
 #define VOTERS_FILE "data/voters.dat"
-#define CSV_EXPORT_FILE "data/election_results.csv"
 
-/* --- SONU Official Positions --- */
 const char* SONU_POSITIONS[] = {
     "Chairperson",
     "Vice-Chairperson",
@@ -17,7 +14,6 @@ const char* SONU_POSITIONS[] = {
     "Health and Accommodation Secretary"
 };
 
-/* --- Data Structures (File Design) --- */
 typedef struct {
     int id;
     char name[50];
@@ -31,7 +27,6 @@ typedef struct {
     int has_voted; // 0 = No, 1 = Yes
 } Voter;
 
-/* --- MODULES (Modular Design) --- */
 
 void register_candidate() {
     FILE *fp = fopen(CANDIDATES_FILE, "ab");
@@ -111,7 +106,7 @@ void cast_vote() {
     while (fread(&c, sizeof(Candidate), 1, cfp)) {
         if (c.id == choice_id) {
             c.votes++;
-            fseek(cfp, -sizeof(Candidate), SEEK_CUR);
+            fseek(cfp, -(long)sizeof(Candidate), SEEK_CUR);
             fwrite(&c, sizeof(Candidate), 1, cfp);
             vote_success = 1; break;
         }
@@ -119,7 +114,7 @@ void cast_vote() {
 
     if (vote_success) {
         v.has_voted = 1;
-        fseek(vfp, -sizeof(Voter), SEEK_CUR);
+        fseek(vfp, -(long)sizeof(Voter), SEEK_CUR);
         fwrite(&v, sizeof(Voter), 1, vfp);
         printf("[✓] Vote cast successfully for ID %d!\n", choice_id);
     } else {
@@ -142,38 +137,16 @@ void tally_results() {
     fclose(fp);
 }
 
-void export_to_csv() {
-    FILE *bfp = fopen(CANDIDATES_FILE, "rb");
-    if (!bfp) { printf("[!] No data to export.\n"); return; }
-
-    FILE *cfp = fopen(CSV_EXPORT_FILE, "w");
-    if (!cfp) { printf("[!] Error creating CSV.\n"); fclose(bfp); return; }
-
-    Candidate c;
-    fprintf(cfp, "Candidate ID,Name,Position,Votes\n");
-    while (fread(&c, sizeof(Candidate), 1, bfp)) {
-        fprintf(cfp, "%d,%s,%s,%d\n", c.id, c.name, c.position, c.votes);
-    }
-
-    fclose(bfp);
-    fclose(cfp);
-    printf("[✓] Exported to 'data/election_results.csv' for Excel.\n");
-}
-
-/* --- MAIN INTERFACE (Top-Down Flow) --- */
 int main() {
     int choice;
     while(1) {
-        printf("\n====================================");
-        printf("\n    SONU VOTING PORTAL 2026       ");
-        printf("\n====================================");
-        printf("\n1. Candidate Registration");
-        printf("\n2. Voter Registration");
-        printf("\n3. Cast Vote");
-        printf("\n4. View Results");
-        printf("\n5. Export to Excel (CSV)");
-        printf("\n6. Exit");
-        printf("\nChoice: ");
+        printf("\nSONU VOTING PORTAL 2026\n");
+        printf("1. Candidate Registration\n");
+        printf("2. Voter Registration\n");
+        printf("3. Cast Vote\n");
+        printf("4. View Results\n");
+        printf("5. Exit\n");
+        printf("Choice: ");
         
         if (scanf("%d", &choice) != 1) {
             while(getchar() != '\n'); // Clear invalid input
@@ -185,8 +158,7 @@ int main() {
             case 2: register_voter(); break;
             case 3: cast_vote(); break;
             case 4: tally_results(); break;
-            case 5: export_to_csv(); break;
-            case 6: exit(0);
+            case 5: exit(0);
             default: printf("Invalid choice!\n");
         }
     }
